@@ -2,8 +2,9 @@
 
 Argparser::Argparser(int argc, char* argv[])
 {
-    for (int i = 0; i < argc; i++)
+    for (int i = 1; i < argc; i++)
     {
+        std::cout << "parsing arg " << i << " = " << argv[i] << std::endl;
         // port
         if(strcmp(argv[i], "-p") == 0)
         {
@@ -16,20 +17,20 @@ Argparser::Argparser(int argc, char* argv[])
             }
             char *next;
             port = strtol(argv[i], &next, 10);
-            if(next != '\0')
+            if(*next != '\0')
             {
                 BadValueError(argv[i]); 
             }
         }
 
         // TLS
-        if(strcmp(argv[i], "-T") == 0)
+        else if(strcmp(argv[i], "-T") == 0)
         {
             i++;
             imaps = true;
         }
         // certificate
-        if(strcmp(argv[i], "-c") == 0)
+        else if(strcmp(argv[i], "-c") == 0)
         {
             i++;
             if(i >= argc)
@@ -38,12 +39,12 @@ Argparser::Argparser(int argc, char* argv[])
                 MissingValueError(argv[i]);
                 break;
             }
-            certfile = argv[i];
+            certfile.assign(argv[i]);
             use_certfile = true;
         }
 
         // certificate file
-        if(strcmp(argv[i], "-C") == 0)
+        else if(strcmp(argv[i], "-C") == 0)
         {
             i++;
             if(i >= argc)
@@ -52,24 +53,24 @@ Argparser::Argparser(int argc, char* argv[])
                 MissingValueError(argv[i]);
                 break;
             }
-            certfolder = argv[i];
+            certfolder.assign(argv[i]);
             use_certfile = true;
         }
         // only new
-        if(strcmp(argv[i], "-n") == 0)
+        else if(strcmp(argv[i], "-n") == 0)
         {
             i++;
             only_headers = true;
         }
         // only headers
-        if(strcmp(argv[i], "-h") == 0)
+        else if(strcmp(argv[i], "-h") == 0)
         {
             i++;
             only_headers = true;
         }
         
         // auth file
-        if(strcmp(argv[i], "-a") == 0)
+        else if(strcmp(argv[i], "-a") == 0)
         {
             i++;
             if(i >= argc)
@@ -78,11 +79,11 @@ Argparser::Argparser(int argc, char* argv[])
                 MissingValueError(argv[i]);
                 break;
             }
-            authfile = argv[i];
+            authfile.assign(argv[i]);
             use_authfile = true;
         }
-        // auth file
-        if(strcmp(argv[i], "-b") == 0)
+        // mailbox
+        else if(strcmp(argv[i], "-b") == 0)
         {
             i++;
             if(i >= argc)
@@ -91,10 +92,10 @@ Argparser::Argparser(int argc, char* argv[])
                 MissingValueError(argv[i]);
                 break;
             }
-            mailbox = argv[i];
+            mailbox.assign(argv[i]);
         }
-        // auth file
-        if(strcmp(argv[i], "-o") == 0)
+        // output folder
+        else if(strcmp(argv[i], "-o") == 0)
         {
             i++;
             if(i >= argc)
@@ -103,7 +104,7 @@ Argparser::Argparser(int argc, char* argv[])
                 MissingValueError(argv[i]);
                 break;
             }
-            outdir = argv[i];
+            outdir.assign(argv[i]);
             use_outdir = true;
         }
         else
@@ -111,8 +112,31 @@ Argparser::Argparser(int argc, char* argv[])
             UnknownOptionError(argv[i]);
             valid_arguments = false;
         }
+    } 
+}
+
+bool Argparser::AreArgsValid()
+{
+    if(valid_arguments == false)
+    {
+        return false;
     }
-    
+    if(use_certfile && use_certfolder)
+    {
+        std::cout << "Cannot use both -c and -C at once" << std::endl;
+        return false;
+    }
+    if(!use_authfile)
+    {
+        std::cout << "Missing authfile argument (-a)" << std::endl;
+        return false;
+    }
+    if(!use_outdir)
+    {
+        std::cout << "Missing output directory argument (-o)" << std::endl;
+        return false;
+    }
+    return true;
 }
 
 void Argparser::BadValueError(char* bad_option)
