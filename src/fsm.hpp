@@ -9,14 +9,13 @@
 #include "connection.hpp"
 #include "fileops.hpp"
 
-enum fsm_state {START, AUTH, INBOX, FETCH, LOGOUT, END, ERR};
+enum fsm_state {START, AUTH, SEARCH, INBOX, FETCH, LOGOUT, END, ERR};
 
 
 class FSM
 {
     public:
         FSM(Argparser *args, auth_data authdata, Connection *connect);
-        void SendNextCommand();
         void WaitUntilReply();
         void ProcessReceivedMessage(std::string message);
         void ListenForReply();
@@ -24,6 +23,7 @@ class FSM
         std::string sent_message_id;       
     private:
         void SaveSearchUIDs(std::string response, std::queue<std::string> *uid_queue);
+        int FSM::WaitForFullAnswer(std::string* answer, std::string message_id);
         std::queue<std::string> mail_ids;
         std::mutex state_lock;
         std::condition_variable state_cv; 
