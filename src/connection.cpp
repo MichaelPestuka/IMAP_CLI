@@ -26,6 +26,14 @@ std::string Connection::Send(std::string message)
     return "";
 }
 
+TLSConnection::~TLSConnection()
+{
+    std::cout << "Cleanup Time" << std::endl;
+    SSL_free(ssl);
+    SSL_CTX_free(ssl_ctx);
+    DestroySSL();
+}
+
 void TLSConnection::Connect()
 {
     int err = connect(this->client_socket, (struct sockaddr*)&(server_address), sizeof(server_address));
@@ -38,8 +46,8 @@ void TLSConnection::Connect()
 
     InitializeSSL();
     const SSL_METHOD *meth = TLS_client_method();
-    SSL_CTX *sslctx = SSL_CTX_new(meth);
-    ssl = SSL_new(sslctx);
+    ssl_ctx = SSL_CTX_new(meth);
+    ssl = SSL_new(ssl_ctx);
     //check error
     if(!ssl)
     {
@@ -72,7 +80,10 @@ void TLSConnection::InitializeSSL()
 
 void TLSConnection::DestroySSL()
 {
-
+    CONF_modules_unload(1);
+    ERR_free_strings();
+    EVP_cleanup();
+    CRYPTO_cleanup_all_ex_data();
 }
 
 std::string TLSConnection::Send(std::string message)

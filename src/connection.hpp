@@ -34,10 +34,12 @@ class TLSConnection : public Connection
     using Connection::Connection;
     public:
         void Connect();
+        ~TLSConnection();
         std::string Send(std::string message);
         std::string Receive();
     private:
         SSL* ssl;
+        SSL_CTX* ssl_ctx;
         int sock;
         void InitializeSSL();
         void DestroySSL();
