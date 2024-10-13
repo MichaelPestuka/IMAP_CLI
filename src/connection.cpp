@@ -21,9 +21,9 @@ std::string Connection::Receive()
     return std::string("0");
 }
 
-int Connection::Send(std::string message)
+std::string Connection::Send(std::string message)
 {
-    return 0;
+    return "";
 }
 
 void TLSConnection::Connect()
@@ -75,8 +75,9 @@ void TLSConnection::DestroySSL()
 
 }
 
-int TLSConnection::Send(std::string message)
+std::string TLSConnection::Send(std::string message)
 {
+    message_id += 1;
     std::string formatted_message = "msg" + std::to_string(message_id) + " " + message + "\n";
     int len = SSL_write(ssl, formatted_message.c_str(), strlen(formatted_message.c_str()));
     std::cout << "written " << len << " bytes: " << formatted_message << std::endl;
@@ -84,23 +85,18 @@ int TLSConnection::Send(std::string message)
     {
         std::cout << "error sending" << std::endl;
     }
-    return 0;
+    return "msg" + std::to_string(message_id); // return sent message ID
+
 }
 
 std::string TLSConnection::Receive()
 {
     std::string full_response;
-    std::string current_line;
-    std::string current_message_id = "msg" + std::to_string(message_id);
-    std::cout << "receiving" << std::endl;
-    while(current_line.find(current_message_id) == std::string::npos && current_line.find("server ready") == std::string::npos)
-    {
-        int len = 100;
-        char buf[1000000];
-        len = SSL_read(ssl, buf, 100);
-        buf[len] = 0;
-        std::cout << "received: " << buf << std::endl;
-        full_response += buf;
-    }
+    int len = 0;
+    char buf[1000000]; //TODO delka bufferu
+    len = SSL_read(ssl, buf, 100);
+    buf[len] = 0;
+    std::cout << "received: " << buf << std::endl;
+    full_response = buf;
     return full_response;
 }

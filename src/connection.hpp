@@ -1,3 +1,6 @@
+#ifndef H_CONNECTION
+#define H_CONNECTION
+
 #include <iostream>
 #include <sys/socket.h>
 #include <stdlib.h>
@@ -12,12 +15,13 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+
 class Connection
 {
     public:
         Connection(const char *ip, int port);
         virtual void Connect();
-        virtual int Send(std::string message);
+        virtual std::string Send(std::string message);
         virtual std::string Receive();
     protected:
         int message_id;
@@ -25,12 +29,12 @@ class Connection
         sockaddr_in server_address;
 };
 
-class TLSConnection : Connection
+class TLSConnection : public Connection
 {
     using Connection::Connection;
     public:
         void Connect();
-        int Send(std::string message);
+        std::string Send(std::string message);
         std::string Receive();
     private:
         SSL* ssl;
@@ -39,3 +43,5 @@ class TLSConnection : Connection
         void DestroySSL();
         
 };
+
+#endif
