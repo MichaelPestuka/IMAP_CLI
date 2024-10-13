@@ -16,14 +16,12 @@ class FSM
 {
     public:
         FSM(Argparser *args, auth_data authdata, Connection *connect);
-        void WaitUntilReply();
-        void ProcessReceivedMessage(std::string message);
-        void ListenForReply();
+        void FSMLoop();
         fsm_state current_state;
         std::string sent_message_id;       
     private:
-        void SaveSearchUIDs(std::string response, std::queue<std::string> *uid_queue);
-        int FSM::WaitForFullAnswer(std::string* answer, std::string message_id);
+        void SaveSearchUIDs();
+        int WaitForFullAnswer();
         std::queue<std::string> mail_ids;
         std::mutex state_lock;
         std::condition_variable state_cv; 
