@@ -159,7 +159,7 @@ void FSM::SaveSearchUIDs()
 
     int pos = current_response_data.find("* SEARCH ");
     std::string current_num = "";
-    for (int i = pos + 9; (current_response_data[i] >= 48 && current_response_data[i] <= 57) || current_response_data[i] == 32; i++) // until reaching char other than numbers or a space
+    for (int i = pos + 9; current_response_data[i] != '\n'; i++) // until reaching newline 
     {
         if(current_response_data[i] < 48 || current_response_data[i] > 57) // if not number, push completed number to queue
         {
