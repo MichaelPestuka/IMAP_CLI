@@ -25,35 +25,12 @@ int FSM::WaitForFullAnswer()
     return 1;
 }
 
-void FSM::WaitUntilReply()
-{
-    while(current_state != fsm_state::END || current_state != fsm_state::ERR)
-    {
-        std::unique_lock<std::mutex> lock{state_lock};
-        state_cv.wait(lock, []() {return true;}); // will unlock for others until notified
-        // SendNextCommand();
-    }
-}
-
-void FSM::ListenForReply()
-{
-    std::cout << "Starting ListenForReply()" << std::endl;
-    while(current_state != fsm_state::END)
-    {
-        std::string message = connect->Receive();
-        ProcessReceivedMessage(message);
-    }
-    std::cout << "finishing ListenForReply()" << std::endl;
-}
-
 void FSM::FSMLoop()
 {
     while(current_state != fsm_state::END)
     {
         fsm_state next_state = current_state;
 
-        // Lock state
-        std::lock_guard<std::mutex> l{state_lock};
         switch(current_state)
         {
             case fsm_state::START:

@@ -23,8 +23,6 @@ class FSM
         void SaveSearchUIDs();
         int WaitForFullAnswer();
         std::queue<std::string> mail_ids;
-        std::mutex state_lock;
-        std::condition_variable state_cv; 
         auth_data authdata;
         Argparser *args;
         Connection *connect;        
