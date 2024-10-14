@@ -60,7 +60,7 @@ Argparser::Argparser(int argc, char* argv[])
         else if(strcmp(argv[i], "-n") == 0)
         {
             i++;
-            only_headers = true;
+            only_new = true;
         }
         // only headers
         else if(strcmp(argv[i], "-h") == 0)
@@ -105,12 +105,25 @@ Argparser::Argparser(int argc, char* argv[])
                 break;
             }
             outdir.assign(argv[i]);
+            if(outdir[outdir.length()] != '/') // add a slash if not present
+            {
+                outdir += '/';
+            }
             use_outdir = true;
         }
         else
         {
-            UnknownOptionError(argv[i]);
-            valid_arguments = false;
+            // server
+            if(i == 1)
+            {
+                server.assign(argv[i]);
+                provided_server = true;
+            }
+            else
+            {
+                UnknownOptionError(argv[i]);
+                valid_arguments = false;
+            }
         }
     } 
 }
@@ -119,6 +132,11 @@ bool Argparser::AreArgsValid()
 {
     if(valid_arguments == false)
     {
+        return false;
+    }
+    if(!provided_server)
+    {
+        std::cout << "Missing server address" << std::endl;
         return false;
     }
     if(use_certfile && use_certfolder)

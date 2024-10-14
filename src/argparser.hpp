@@ -1,3 +1,6 @@
+#ifndef H_ARGPARSER
+#define H_ARGPARSER
+
 #include <string.h>
 #include <iostream>
 
@@ -7,6 +10,9 @@ class Argparser
         Argparser(int argc, char* argv[]);
         bool AreArgsValid();
         bool valid_arguments = true;
+
+        std::string server;
+        bool provided_server;
 
         int port = -1;
 
@@ -35,3 +41,5 @@ class Argparser
         bool provided_authfile;
         bool provided_outdir;
 };
+
+#endif
