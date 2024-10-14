@@ -53,3 +53,9 @@ int ReadAuthfile(std::string path, struct auth_data *data)
     }
     return 0;
 }
+
+bool CheckIfFileExists(std::string path)
+{
+    std::ifstream checked(path);
+    return checked.good();
+}
