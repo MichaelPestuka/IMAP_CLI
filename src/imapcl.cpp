@@ -20,26 +20,35 @@
 
 int main(int argc, char* argv[])
 {
-    Argparser *argparser = new Argparser(argc, argv);
-    if(!argparser->AreArgsValid())
+    Argparser argparser(argc, argv);
+    if(!argparser.AreArgsValid())
     {
         std::cout << "Invalid arguments" << std::endl;
         return 1;
     }
 
     struct auth_data authdata;
-    if(ReadAuthfile(argparser->authfile, &authdata) == 1)
+    if(ReadAuthfile(argparser.authfile, &authdata) == 1)
     {
         return 1;
     }
     std::cout << "logging in as " << authdata.login << " pass: " << authdata.password << std::endl;
 
-    TLSConnection connect = TLSConnection(argparser->server.c_str(), 993);
-    connect.Connect();
-    FSM fsm = FSM(argparser, authdata, &connect);
-    std::thread receiver(&FSM::FSMLoop, std::ref(fsm));
+    Connection* connect;
+    if(argparser.imaps)
+    {
+        connect = new TLSConnection(argparser.server.c_str(), "993");
+    }
+    else
+    {
+        connect = new UnsecuredConnection(argparser.server.c_str(), "143");
+    }
+    connect->Connect();
+    FSM fsm = FSM(&argparser, authdata, connect);
+    fsm.FSMLoop();
+    // std::thread receiver(&FSM::FSMLoop, std::ref(fsm));
     // std::thread sender(&FSM::WaitUntilReply, std::ref(fsm));
-    receiver.join();
+    // receiver.join();
     // sender.join();
     std::cout << "Endies :>" << std::endl;
     return 0;
