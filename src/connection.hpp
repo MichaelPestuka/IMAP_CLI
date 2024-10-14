@@ -19,13 +19,14 @@
 class Connection
 {
     public:
-        Connection(const char *ip, int port);
+        Connection(const char *hostname, const char* port);
         virtual void Connect();
         virtual std::string Send(std::string message);
         virtual std::string Receive();
     protected:
         int message_id;
         int client_socket;
+        struct addrinfo *resolved_data;
         sockaddr_in server_address;
 };
 
@@ -44,6 +45,17 @@ class TLSConnection : public Connection
         void InitializeSSL();
         void DestroySSL();
         
+};
+
+class UnsecuredConnection : public Connection
+{
+    using Connection::Connection;
+    public:
+        void Connect();
+        ~UnsecuredConnection();
+        std::string Send(std::string message);
+        std::string Receive();
+
 };
 
 #endif

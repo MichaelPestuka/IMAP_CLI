@@ -1,16 +1,38 @@
 #include "connection.hpp"
 
-Connection::Connection(const char* ip, int port)
+Connection::Connection(const char* hostname, const char* port)
 {
-    // Create socket
-    client_socket = socket(AF_INET, SOCK_STREAM, 0);
-
-    // Connect to socket
-    server_address.sin_family = AF_INET;
-    server_address.sin_port=htons(port);
-    inet_pton(AF_INET, ip, &(server_address.sin_addr));
-
     message_id = 0;
+    
+    // Resolve hostname
+    struct addrinfo hints, *p;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;
+
+    
+
+    int resolve_success = getaddrinfo(hostname, port, &hints, &resolved_data);
+    
+    if(resolve_success != 0)
+    {
+        std::cerr << "Error resolving hostname: " << hostname << " error code " << gai_strerror(resolve_success) << std::endl;
+        return;
+    }
+    for (p = resolved_data; p != NULL; p = p->ai_next)
+    {
+        char ipstr[INET_ADDRSTRLEN];
+        void* addr;
+        struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+
+        addr = &(ipv4->sin_addr);
+        inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));
+        std::cout << "Resolved to: " << ipstr << std::endl;
+    }
+        
+    client_socket = socket(resolved_data->ai_family, resolved_data->ai_socktype, resolved_data->ai_protocol);
 }
 
 void Connection::Connect()
@@ -32,11 +54,12 @@ TLSConnection::~TLSConnection()
     SSL_free(ssl);
     SSL_CTX_free(ssl_ctx);
     DestroySSL();
+    close(client_socket);
 }
 
 void TLSConnection::Connect()
 {
-    int err = connect(this->client_socket, (struct sockaddr*)&(server_address), sizeof(server_address));
+    int err = connect(this->client_socket, resolved_data->ai_addr, resolved_data->ai_addrlen);
     
     if(err < 0)
     {
@@ -72,7 +95,6 @@ void TLSConnection::Connect()
 
 void TLSConnection::InitializeSSL()
 {
-
     SSL_load_error_strings();
     SSL_library_init();
     OpenSSL_add_all_algorithms();
@@ -90,24 +112,57 @@ std::string TLSConnection::Send(std::string message)
 {
     message_id += 1;
     std::string formatted_message = "msg" + std::to_string(message_id) + " " + message + "\n";
-    int len = SSL_write(ssl, formatted_message.c_str(), strlen(formatted_message.c_str()));
-    std::cout << "written " << len << " bytes: " << formatted_message << std::endl;
+    int len = SSL_write(ssl, formatted_message.c_str(), formatted_message.length());
     if(len < 0)
     {
-        std::cout << "error sending" << std::endl;
+        std::cout << "error sending message" << std::endl;
     }
+    std::cout << "wrt: " << formatted_message << std::endl; 
     return "msg" + std::to_string(message_id); // return sent message ID
-
 }
 
 std::string TLSConnection::Receive()
 {
-    std::string full_response;
-    int len = 0;
-    char buf[1000000]; //TODO delka bufferu
-    len = SSL_read(ssl, buf, 100);
+    char buf[1000];
+    int len = SSL_read(ssl, buf, 1000);
     buf[len] = 0;
-    std::cout << "received: " << buf << std::endl;
-    full_response = buf;
-    return full_response;
+    std::cout << "rec: " << buf << std::endl; 
+    return std::string(buf);
+}
+
+void UnsecuredConnection::Connect()
+{
+    // TODO check all resolved addresses
+    int err = connect(this->client_socket, resolved_data->ai_addr, resolved_data->ai_addrlen);
+    
+    if(err < 0)
+    {
+        std::cout << "Error connecting" << std::endl;
+        return;
+    }
+}
+
+std::string UnsecuredConnection::Send(std::string message)
+{
+    message_id += 1;
+    std::string formatted_message = "msg" + std::to_string(message_id) + " " + message + "\n";
+    int len = write(client_socket, formatted_message.c_str(), formatted_message.length());
+    if(len < 0)
+    {
+        std::cout << "error sending message" << std::endl;
+    }
+    return "msg" + std::to_string(message_id); // return sent message ID
+}
+
+std::string UnsecuredConnection::Receive()
+{
+    char buf[1000];
+    int len = recv(client_socket, buf, 1000, 0);
+    buf[len] = 0;
+    return std::string(buf);
+}
+
+UnsecuredConnection::~UnsecuredConnection()
+{
+    close(client_socket);
 }
