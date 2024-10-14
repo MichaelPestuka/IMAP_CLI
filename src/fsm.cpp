@@ -11,10 +11,16 @@ FSM::FSM(Argparser *args, auth_data authdata, Connection *connect)
 
 int FSM::WaitForFullAnswer()
 {
-    current_response_data = "";
     std::string received_part = connect->Receive();
+    current_response_data = received_part;
     while (received_part.find(sent_message_id) == std::string::npos)
     {
+        // if reading returns 0, there is an error while reading, most likely connection closed
+        if(received_part == "\0")
+        {
+            std::cout << "Error reading from server" << std::endl;
+            return 1;
+        }
         current_response_data += received_part;
         received_part = connect->Receive();
     }
@@ -30,6 +36,7 @@ void FSM::FSMLoop()
     while(current_state != fsm_state::END)
     {
         fsm_state next_state = current_state;
+
 
         switch(current_state)
         {
@@ -167,6 +174,7 @@ void FSM::FSMLoop()
                 break;
             }
         }
+
 
         current_state = next_state;
         current_response_data = "";
