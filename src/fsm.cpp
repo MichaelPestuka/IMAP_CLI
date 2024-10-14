@@ -79,7 +79,14 @@ void FSM::FSMLoop()
 
             case fsm_state::SEARCH:
             {
-                sent_message_id = connect->Send("UID SEARCH ALL"); //TODO arg parsing
+                if(args->only_new)
+                {
+                    sent_message_id = connect->Send("UID SEARCH NEW");
+                }
+                else
+                {
+                    sent_message_id = connect->Send("UID SEARCH ALL");
+                }
                 int success = WaitForFullAnswer();
                 if(success == 0)
                 {
@@ -101,13 +108,31 @@ void FSM::FSMLoop()
                 }
                 else
                 {
-                    // check if message already saved
-                    sent_message_id = connect->Send("UID FETCH " + mail_ids.front() + " BODY[]");
-                    mail_ids.pop();
+                    // Headers and full emails are saved into separate files
+
+                    // check if file named LOGIN_INBOX_UID_HEADER already exists (message is already saved)
+                    if(args->only_headers)
+                    {
+                        if(!CheckIfFileExists(args->outdir + authdata.login + "_" + args->mailbox + "_" + mail_ids.front() + "_HEADER"))
+                        {
+                            sent_message_id = connect->Send("UID FETCH " + mail_ids.front() + " BODY.PEEK[HEADER]"); // checking headers wont change SEEN state
+                        }
+                        mail_ids.pop();
+                    }
+                    else
+                    {
+                        // Check if file named LOGIN_INBOX_UID exists
+                        if(!CheckIfFileExists(args->outdir + authdata.login + "_" + args->mailbox + "_" + mail_ids.front()))
+                        {
+                            sent_message_id = connect->Send("UID FETCH " + mail_ids.front() + " BODY[]");
+                        }
+                        mail_ids.pop();
+                    }
                     int success = WaitForFullAnswer();
                     if(success == 0)
                     {
-                        // save message
+                        WriteToFile(args->outdir + authdata.login + "_" + args->mailbox + "_" + mail_ids.front(), current_response_data); // save email contents to INBOX_UID file
+                        mail_ids.pop();
                     }
                     else
                     {
