@@ -4,6 +4,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <queue>
+#include <regex>
 
 #include "argparser.hpp"
 #include "connection.hpp"
@@ -22,6 +23,7 @@ class FSM
     private:
         void SaveSearchUIDs();
         int WaitForFullAnswer();
+        std::string ExtractEmailBody();
         std::queue<std::string> mail_ids;
         auth_data authdata;
         Argparser *args;

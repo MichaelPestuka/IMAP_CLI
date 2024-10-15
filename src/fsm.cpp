@@ -124,7 +124,11 @@ void FSM::FSMLoop()
                         {
                             sent_message_id = connect->Send("UID FETCH " + mail_ids.front() + " BODY.PEEK[HEADER]"); // checking headers wont change SEEN state
                         }
-                        mail_ids.pop();
+                        else
+                        {
+                            mail_ids.pop();
+                            break;
+                        }
                     }
                     else
                     {
@@ -133,12 +137,17 @@ void FSM::FSMLoop()
                         {
                             sent_message_id = connect->Send("UID FETCH " + mail_ids.front() + " BODY[]");
                         }
-                        mail_ids.pop();
+                        else
+                        {
+                            mail_ids.pop();
+                            break;
+                        }
                     }
                     int success = WaitForFullAnswer();
                     if(success == 0)
                     {
-                        WriteToFile(args->outdir + authdata.login + "_" + args->mailbox + "_" + mail_ids.front(), current_response_data); // save email contents to INBOX_UID file
+                        std::string email_body = ExtractEmailBody();
+                        WriteToFile(args->outdir + authdata.login + "_" + args->mailbox + "_" + mail_ids.front(), email_body); // save email contents to INBOX_UID file
                         mail_ids.pop();
                     }
                     else
@@ -206,4 +215,15 @@ void FSM::SaveSearchUIDs()
         }
     }
     return;
+}
+
+std::string FSM::ExtractEmailBody()
+{
+    int body_start = current_response_data.find("BODY");
+    std::string body = current_response_data.substr(body_start);
+    int size_start = body.find("{") + 1;
+    int size_end = body.find("}");
+    int body_size = std::stoi(body.substr(size_start, size_end - size_start));
+
+    return body.substr(size_end + 3, body_size - 3); // +3 to skip CRFL after }, -3 to compensate for this skip
 }
