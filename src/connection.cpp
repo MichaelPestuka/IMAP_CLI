@@ -35,6 +35,9 @@ Connection::Connection(const char* hostname, const char* port)
     client_socket = socket(resolved_data->ai_family, resolved_data->ai_socktype, resolved_data->ai_protocol);
 }
 
+Connection::~Connection()
+{}
+
 void Connection::Connect()
 {}
 
@@ -50,11 +53,11 @@ std::string Connection::Send(std::string message)
 
 TLSConnection::~TLSConnection()
 {
-    std::cout << "Cleanup Time" << std::endl;
     SSL_free(ssl);
     SSL_CTX_free(ssl_ctx);
     DestroySSL();
     close(client_socket);
+    freeaddrinfo(resolved_data);
 }
 
 void TLSConnection::Connect()
@@ -111,7 +114,7 @@ void TLSConnection::DestroySSL()
 std::string TLSConnection::Send(std::string message)
 {
     message_id += 1;
-    std::string formatted_message = "msg" + std::to_string(message_id) + " " + message + "\n";
+    std::string formatted_message = "msg" + std::to_string(message_id) + " " + message + "\r\n";
     int len = SSL_write(ssl, formatted_message.c_str(), formatted_message.length());
     if(len < 0)
     {
@@ -130,6 +133,8 @@ std::string TLSConnection::Receive()
     return std::string(buf);
 }
 
+// UNSECURED CONNECTION CODE --------------------------------------------------------------------------
+
 void UnsecuredConnection::Connect()
 {
     // TODO check all resolved addresses
@@ -145,12 +150,13 @@ void UnsecuredConnection::Connect()
 std::string UnsecuredConnection::Send(std::string message)
 {
     message_id += 1;
-    std::string formatted_message = "msg" + std::to_string(message_id) + " " + message + "\n";
+    std::string formatted_message = "msg" + std::to_string(message_id) + " " + message + "\r\n";
     int len = write(client_socket, formatted_message.c_str(), formatted_message.length());
     if(len < 0)
     {
         std::cout << "error sending message" << std::endl;
     }
+    std::cout << "wrt: " << formatted_message << std::endl;
     return "msg" + std::to_string(message_id); // return sent message ID
 }
 
@@ -159,10 +165,12 @@ std::string UnsecuredConnection::Receive()
     char buf[1000];
     int len = recv(client_socket, buf, 1000, 0);
     buf[len] = 0;
+    std::cout << "rec: " << buf << std::endl;
     return std::string(buf);
 }
 
 UnsecuredConnection::~UnsecuredConnection()
 {
     close(client_socket);
+    freeaddrinfo(resolved_data);
 }

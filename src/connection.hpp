@@ -16,10 +16,13 @@
 #include <openssl/err.h>
 
 
+#include <errno.h>
+
 class Connection
 {
     public:
         Connection(const char *hostname, const char* port);
+        virtual ~Connection();
         virtual void Connect();
         virtual std::string Send(std::string message);
         virtual std::string Receive();
