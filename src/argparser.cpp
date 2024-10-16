@@ -26,7 +26,6 @@ Argparser::Argparser(int argc, char* argv[])
         // TLS
         else if(strcmp(argv[i], "-T") == 0)
         {
-            i++;
             imaps = true;
         }
         // certificate
@@ -39,7 +38,7 @@ Argparser::Argparser(int argc, char* argv[])
                 MissingValueError(argv[i]);
                 break;
             }
-            certfile.assign(argv[i]);
+            certfile = argv[i];
             use_certfile = true;
         }
 
@@ -53,7 +52,7 @@ Argparser::Argparser(int argc, char* argv[])
                 MissingValueError(argv[i]);
                 break;
             }
-            certfolder.assign(argv[i]);
+            certfolder = argv[i];
             use_certfile = true;
         }
         // only new
@@ -79,7 +78,7 @@ Argparser::Argparser(int argc, char* argv[])
                 MissingValueError(argv[i]);
                 break;
             }
-            authfile.assign(argv[i]);
+            authfile = argv[i];
             use_authfile = true;
         }
         // mailbox
@@ -92,7 +91,7 @@ Argparser::Argparser(int argc, char* argv[])
                 MissingValueError(argv[i]);
                 break;
             }
-            mailbox.assign(argv[i]);
+            mailbox = argv[i];
         }
         // output folder
         else if(strcmp(argv[i], "-o") == 0)
@@ -104,7 +103,7 @@ Argparser::Argparser(int argc, char* argv[])
                 MissingValueError(argv[i]);
                 break;
             }
-            outdir.assign(argv[i]);
+            outdir = argv[i];
             if(outdir[outdir.length()] != '/') // add a slash if not present
             {
                 outdir += '/';
@@ -116,7 +115,7 @@ Argparser::Argparser(int argc, char* argv[])
             // server
             if(i == 1)
             {
-                server.assign(argv[i]);
+                server = argv[i];
                 provided_server = true;
             }
             else
