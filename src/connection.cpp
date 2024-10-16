@@ -1,8 +1,9 @@
 #include "connection.hpp"
 
-Connection::Connection(const char* hostname, const char* port)
+Connection::Connection(const char* hostname, const char* port, Argparser* args)
 {
     message_id = 0;
+    this->args = args;
     
     // Resolve hostname
     struct addrinfo hints, *p;
@@ -51,6 +52,8 @@ std::string Connection::Send(std::string message)
     return "";
 }
 
+// TLS CONNECTION CODE --------------------------------------------------------
+
 TLSConnection::~TLSConnection()
 {
     SSL_free(ssl);
@@ -73,6 +76,15 @@ void TLSConnection::Connect()
     InitializeSSL();
     const SSL_METHOD *meth = TLS_client_method();
     ssl_ctx = SSL_CTX_new(meth);
+    if(args->use_certfile)
+    {
+        // SSL_CTX_use_certificate_file(ssl_ctx, args->certfile.c_str(), SSL_FILETYPE_PEM); // Only PEM certificates, idc anymore
+        SSL_CTX_load_verify_file(ssl_ctx, args->certfile.c_str()); // May work :>
+    }
+    else if(args->use_certfolder)
+    {
+        SSL_CTX_load_verify_dir(ssl_ctx, args->certfolder.c_str());
+    }
     ssl = SSL_new(ssl_ctx);
     //check error
     if(!ssl)

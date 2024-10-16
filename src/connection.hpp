@@ -15,18 +15,20 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include "argparser.hpp"
 
-#include <errno.h>
+#include <fstream>
 
 class Connection
 {
     public:
-        Connection(const char *hostname, const char* port);
+        Connection(const char *hostname, const char* port, Argparser* args);
         virtual ~Connection();
         virtual void Connect();
         virtual std::string Send(std::string message);
         virtual std::string Receive();
     protected:
+        Argparser* args;
         int message_id;
         int client_socket;
         struct addrinfo *resolved_data;
