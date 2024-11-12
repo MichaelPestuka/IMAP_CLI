@@ -27,7 +27,7 @@ int FSM::WaitForFullAnswer()
         // if reading returns 0, there is an error while reading, most likely connection closed
         if(received_part == "\0")
         {
-            std::cout << "Error reading from server" << std::endl;
+            std::cerr << "Error reading from server" << std::endl;
             return 1;
         }
         current_response_data += received_part;
@@ -58,7 +58,7 @@ void FSM::FSMLoop()
                 }
                 else
                 {
-                    std::cerr << "Couldn't connect to server" << std::endl;
+                    std::cerr << "Error: Couldn't connect to server" << std::endl;
                     next_state = fsm_state::ERR; // Server connection not successful
                 }
                 break;
@@ -74,7 +74,7 @@ void FSM::FSMLoop()
                 }
                 else
                 {
-                    std::cerr << "Couldn't authenticate user" << std::endl;
+                    std::cerr << "Error: Couldn't authenticate user" << std::endl;
                     next_state = fsm_state::ERR;
                 }
                 break;
@@ -91,7 +91,7 @@ void FSM::FSMLoop()
                 }
                 else
                 {
-                    std::cerr << "Couldn't select mailbox " << args->mailbox << std::endl;
+                    std::cerr << "Error: Couldn't select mailbox " << args->mailbox << std::endl;
                     next_state = fsm_state::ERR;
                 }
                 break;
@@ -115,7 +115,7 @@ void FSM::FSMLoop()
                 }
                 else
                 {
-                    std::cerr << "SEARCH command failed" << std::endl;
+                    std::cerr << "Error: SEARCH command failed" << std::endl;
                     next_state = fsm_state::ERR;
                 }
                 break;
@@ -167,7 +167,7 @@ void FSM::FSMLoop()
                     }
                     else
                     {
-                        std::cerr << "Couldn't fetch email with UID " << mail_ids.front() << std::endl;
+                        std::cerr << "Error: Couldn't fetch email with UID " << mail_ids.front() << std::endl;
                         next_state = fsm_state::ERR;
                     }
                 }
@@ -205,8 +205,6 @@ void FSM::FSMLoop()
 
         current_state = next_state;
         current_response_data = "";
-        std::cout << current_state << " state with mid " << sent_message_id << std::endl;
-        // State is unlocked
     }
 }
 
@@ -224,7 +222,6 @@ void FSM::SaveSearchUIDs()
         if(current_response_data[i] < 48 || current_response_data[i] > 57) // if not number, push completed number to queue
         {
             mail_ids.push(current_num);
-            std::cout << "parsed: " << current_num << std::endl;
             current_num = "";
         }
         else // if number, add char to current number

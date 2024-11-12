@@ -4,7 +4,6 @@ Argparser::Argparser(int argc, char* argv[])
 {
     for (int i = 1; i < argc; i++)
     {
-        std::cout << "parsing arg " << i << " = " << argv[i] << std::endl;
         // port
         if(strcmp(argv[i], "-p") == 0)
         {
@@ -135,22 +134,22 @@ bool Argparser::AreArgsValid()
     }
     if(!provided_server)
     {
-        std::cout << "Missing server address" << std::endl;
+        std::cerr << "Error: Missing server address" << std::endl;
         return false;
     }
     if(use_certfile && use_certfolder)
     {
-        std::cout << "Cannot use both -c and -C at once" << std::endl;
+        std::cerr << "Error: Cannot use both -c and -C at once" << std::endl;
         return false;
     }
     if(!use_authfile)
     {
-        std::cout << "Missing authfile argument (-a)" << std::endl;
+        std::cerr << "Error: Missing authfile argument (-a)" << std::endl;
         return false;
     }
     if(!use_outdir)
     {
-        std::cout << "Missing output directory argument (-o)" << std::endl;
+        std::cerr << "Error: Missing output directory argument (-o)" << std::endl;
         return false;
     }
     return true;
@@ -158,15 +157,15 @@ bool Argparser::AreArgsValid()
 
 void Argparser::BadValueError(char* bad_option)
 {
-    std::cout << "Argument " << bad_option << " has invalid value" << std::endl;
+    std::cerr << "Error: Argument " << bad_option << " has invalid value" << std::endl;
 }
 
 void Argparser::MissingValueError(char* bad_option)
 {
-    std::cout << "Argument " << bad_option << " is missing a value" << std::endl;
+    std::cerr << "Error: Argument " << bad_option << " is missing a value" << std::endl;
 }
 
 void Argparser::UnknownOptionError(char* unknown)
 {
-    std::cout << "Unknown option " << unknown << std::endl;
+    std::cerr << "Error: Unknown option " << unknown << std::endl;
 }

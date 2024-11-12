@@ -10,7 +10,7 @@ int WriteToFile(std::string path, std::string contents)
     }
     else
     {
-        std::cout << "Couldnt open " << path << std::endl;
+        std::cerr << "Error: Unable to open " << path << std::endl;
         return 1;
     }
     return 0;
@@ -32,7 +32,7 @@ int ReadAuthfile(std::string path, struct auth_data *data)
         }
         else
         {
-            std::cout << "bad authfile format" << std::endl;
+            std::cerr << "Error: Bad authfile format" << std::endl;
             return 1;
         }
         if(password.substr(0, 11) == "password = ")
@@ -41,14 +41,14 @@ int ReadAuthfile(std::string path, struct auth_data *data)
         }
         else
         {
-            std::cout << "bad authfile format" << std::endl;
+            std::cerr << "Error: Bad authfile format" << std::endl;
             return 1;
         }
         authfile.close();
     }
     else
     {
-        std::cout << "Unable to open " << path << std::endl;
+        std::cerr << "Error: Unable to open " << path << std::endl;
         return 1;
     }
     return 0;
