@@ -30,7 +30,6 @@ Connection::Connection(const char* hostname, const char* port, Argparser* args)
 
         addr = &(ipv4->sin_addr);
         inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));
-        std::cout << "Resolved to: " << ipstr << std::endl;
     }
         
     client_socket = socket(resolved_data->ai_family, resolved_data->ai_socktype, resolved_data->ai_protocol);
@@ -39,8 +38,10 @@ Connection::Connection(const char* hostname, const char* port, Argparser* args)
 Connection::~Connection()
 {}
 
-void Connection::Connect()
-{}
+int Connection::Connect()
+{
+    return 1;
+}
 
 std::string Connection::Receive()
 {
@@ -63,14 +64,14 @@ TLSConnection::~TLSConnection()
     freeaddrinfo(resolved_data);
 }
 
-void TLSConnection::Connect()
+int TLSConnection::Connect()
 {
     int err = connect(this->client_socket, resolved_data->ai_addr, resolved_data->ai_addrlen);
     
     if(err < 0)
     {
-        std::cout << "Error connecting" << std::endl;
-        return;
+        std::cerr << "Error connecting" << std::endl;
+        return 1;
     }
 
     InitializeSSL();
@@ -79,18 +80,24 @@ void TLSConnection::Connect()
     if(args->use_certfile)
     {
         // SSL_CTX_use_certificate_file(ssl_ctx, args->certfile.c_str(), SSL_FILETYPE_PEM); // Only PEM certificates, idc anymore
-        SSL_CTX_load_verify_file(ssl_ctx, args->certfile.c_str()); // May work :>
+        if(SSL_CTX_load_verify_file(ssl_ctx, args->certfile.c_str()) == 0) // Error loading
+        {
+            std::cerr << "Error loading certificate file, default directory will be used instead" << std::endl;
+        }
     }
     else if(args->use_certfolder)
     {
-        SSL_CTX_load_verify_dir(ssl_ctx, args->certfolder.c_str());
+        if(SSL_CTX_load_verify_dir(ssl_ctx, args->certfolder.c_str()) == 0)
+        {
+            std::cerr << "Error loading certificate directory, default directory will be used instead" << std::endl;
+        }
     }
     ssl = SSL_new(ssl_ctx);
     //check error
     if(!ssl)
     {
-        std::cout << "Error creating SSL" <<  std::endl;
-        return;
+        std::cerr << "Error creating SSL" <<  std::endl;
+        return 1;
     }
 
     sock = SSL_get_fd(ssl);
@@ -99,13 +106,12 @@ void TLSConnection::Connect()
 
     if(err <= 0)
     {
-        std::cout << "Error connecting ssl errno: " << err << std::endl;
         int ret = ERR_get_error();
         char *str = ERR_error_string(ret, NULL);
-        std::cout << "errno: " << ret << " -> " <<  str << std::endl;
-        return;
+        std::cerr << "Error connecting ssl - " << str << std::endl;
+        return 1;
     }
-    std::cout << "SSl setup using " << SSL_get_cipher(ssl) << std::endl;
+    return 0;
 }
 
 void TLSConnection::InitializeSSL()
@@ -130,9 +136,9 @@ std::string TLSConnection::Send(std::string message)
     int len = SSL_write(ssl, formatted_message.c_str(), formatted_message.length());
     if(len < 0)
     {
-        std::cout << "error sending message" << std::endl;
+        std::cerr << "Error sending message to server" << std::endl;
+        return "";
     }
-    std::cout << "wrt: " << formatted_message << std::endl; 
     return "msg" + std::to_string(message_id); // return sent message ID
 }
 
@@ -141,22 +147,22 @@ std::string TLSConnection::Receive()
     char buf[1000];
     int len = SSL_read(ssl, buf, 1000);
     buf[len] = 0;
-    std::cout << "rec: " << buf << std::endl; 
     return std::string(buf);
 }
 
 // UNSECURED CONNECTION CODE --------------------------------------------------------------------------
 
-void UnsecuredConnection::Connect()
+int UnsecuredConnection::Connect()
 {
     // TODO check all resolved addresses
     int err = connect(this->client_socket, resolved_data->ai_addr, resolved_data->ai_addrlen);
     
     if(err < 0)
     {
-        std::cout << "Error connecting" << std::endl;
-        return;
+        std::cerr << "Error connecting to server" << std::endl;
+        return 1;
     }
+    return 0;
 }
 
 std::string UnsecuredConnection::Send(std::string message)
@@ -166,9 +172,8 @@ std::string UnsecuredConnection::Send(std::string message)
     int len = write(client_socket, formatted_message.c_str(), formatted_message.length());
     if(len < 0)
     {
-        std::cout << "error sending message" << std::endl;
+        std::cerr << "Error sending message to server" << std::endl;
     }
-    std::cout << "wrt: " << formatted_message << std::endl;
     return "msg" + std::to_string(message_id); // return sent message ID
 }
 
@@ -177,7 +182,6 @@ std::string UnsecuredConnection::Receive()
     char buf[1000];
     int len = recv(client_socket, buf, 1000, 0);
     buf[len] = 0;
-    std::cout << "rec: " << buf << std::endl;
     return std::string(buf);
 }
 

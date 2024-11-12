@@ -24,7 +24,7 @@ class Connection
     public:
         Connection(const char *hostname, const char* port, Argparser* args);
         virtual ~Connection();
-        virtual void Connect();
+        virtual int Connect();
         virtual std::string Send(std::string message);
         virtual std::string Receive();
     protected:
@@ -39,7 +39,7 @@ class TLSConnection : public Connection
 {
     using Connection::Connection;
     public:
-        void Connect();
+        int Connect();
         ~TLSConnection();
         std::string Send(std::string message);
         std::string Receive();
@@ -56,7 +56,7 @@ class UnsecuredConnection : public Connection
 {
     using Connection::Connection;
     public:
-        void Connect();
+        int Connect();
         ~UnsecuredConnection();
         std::string Send(std::string message);
         std::string Receive();
