@@ -10,7 +10,7 @@
 #include "connection.hpp"
 #include "fileops.hpp"
 
-enum fsm_state {START, AUTH, SEARCH, INBOX, FETCH, LOGOUT, END, ERR};
+enum fsm_state {START, AUTH, SEARCH, INBOX, FETCH, LOGOUT, END, ERR, SHUTDOWN};
 
 
 class FSM
@@ -24,6 +24,9 @@ class FSM
         void SaveSearchUIDs();
         int WaitForFullAnswer();
         std::string ExtractEmailBody();
+        void ExtractUIDValidity();
+        std::string uidvalidity;
+        int downloaded_email_count;
         std::queue<std::string> mail_ids;
         auth_data authdata;
         Argparser *args;

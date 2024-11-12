@@ -6,11 +6,20 @@ FSM::FSM(Argparser *args, auth_data authdata, Connection *connect)
     this->authdata = authdata;
     current_state = fsm_state::START;
     current_response_data = "";
+    sent_message_id = "*"; // No starting message ID
     this->connect = connect;
+    this->uidvalidity = "0";
+    this->downloaded_email_count = 0;
 }
 
 int FSM::WaitForFullAnswer()
 {
+    if(sent_message_id == "")
+    {
+        current_state = fsm_state::ERR;
+        return 1;
+    }
+
     std::string received_part = connect->Receive();
     current_response_data = received_part;
     while (received_part.find(sent_message_id) == std::string::npos)
@@ -33,7 +42,7 @@ int FSM::WaitForFullAnswer()
 
 void FSM::FSMLoop()
 {
-    while(current_state != fsm_state::END)
+    while(current_state != fsm_state::SHUTDOWN)
     {
         fsm_state next_state = current_state;
 
@@ -49,6 +58,7 @@ void FSM::FSMLoop()
                 }
                 else
                 {
+                    std::cerr << "Couldn't connect to server" << std::endl;
                     next_state = fsm_state::ERR; // Server connection not successful
                 }
                 break;
@@ -64,6 +74,7 @@ void FSM::FSMLoop()
                 }
                 else
                 {
+                    std::cerr << "Couldn't authenticate user" << std::endl;
                     next_state = fsm_state::ERR;
                 }
                 break;
@@ -76,9 +87,11 @@ void FSM::FSMLoop()
                 if(success == 0)
                 {
                     next_state = fsm_state::SEARCH;
+                    ExtractUIDValidity();
                 }
                 else
                 {
+                    std::cerr << "Couldn't select mailbox " << args->mailbox << std::endl;
                     next_state = fsm_state::ERR;
                 }
                 break;
@@ -102,6 +115,7 @@ void FSM::FSMLoop()
                 }
                 else
                 {
+                    std::cerr << "SEARCH command failed" << std::endl;
                     next_state = fsm_state::ERR;
                 }
                 break;
@@ -120,7 +134,7 @@ void FSM::FSMLoop()
                     // check if file named LOGIN_INBOX_UID_HEADER already exists (message is already saved)
                     if(args->only_headers)
                     {
-                        if(!CheckIfFileExists(args->outdir + authdata.login + "_" + args->mailbox + "_" + mail_ids.front() + "_HEADER"))
+                        if(!CheckIfFileExists(args->outdir + authdata.login + "_" + args->mailbox + "_" + uidvalidity + "_" + mail_ids.front() + "_HEADER"))
                         {
                             sent_message_id = connect->Send("UID FETCH " + mail_ids.front() + " BODY.PEEK[HEADER]"); // checking headers wont change SEEN state
                         }
@@ -133,7 +147,7 @@ void FSM::FSMLoop()
                     else
                     {
                         // Check if file named LOGIN_INBOX_UID exists
-                        if(!CheckIfFileExists(args->outdir + authdata.login + "_" + args->mailbox + "_" + mail_ids.front()))
+                        if(!CheckIfFileExists(args->outdir + authdata.login + "_" + args->mailbox + "_" + uidvalidity + "_" + mail_ids.front()))
                         {
                             sent_message_id = connect->Send("UID FETCH " + mail_ids.front() + " BODY[]");
                         }
@@ -146,12 +160,14 @@ void FSM::FSMLoop()
                     int success = WaitForFullAnswer();
                     if(success == 0)
                     {
+                        downloaded_email_count++;
                         std::string email_body = ExtractEmailBody();
-                        WriteToFile(args->outdir + authdata.login + "_" + args->mailbox + "_" + mail_ids.front(), email_body); // save email contents to INBOX_UID file
+                        WriteToFile(args->outdir + authdata.login + "_" + args->mailbox + "_" + uidvalidity + "_" + mail_ids.front(), email_body); // save email contents to INBOX_UID file
                         mail_ids.pop();
                     }
                     else
                     {
+                        std::cerr << "Couldn't fetch email with UID " << mail_ids.front() << std::endl;
                         next_state = fsm_state::ERR;
                     }
                 }
@@ -168,13 +184,15 @@ void FSM::FSMLoop()
 
             case fsm_state::END:
             {
+                std::cout << "Downloaded " << downloaded_email_count << " email(s) from mailbox " << args->mailbox << std::endl;
+                next_state = fsm_state::SHUTDOWN;
                 break;
             }
 
             case fsm_state::ERR:
             {
-                std::cout << "Erorr happened" << std::endl;
-                next_state = fsm_state::END;
+                std::cerr << "Exiting program because an error occured" << std::endl;
+                next_state = fsm_state::SHUTDOWN;
                 break;
             }
 
@@ -226,4 +244,25 @@ std::string FSM::ExtractEmailBody()
     int body_size = std::stoi(body.substr(size_start, size_end - size_start));
 
     return body.substr(size_end + 3, body_size - 3); // +3 to skip CRFL after }, -3 to compensate for this skip
+}
+
+
+void FSM::ExtractUIDValidity()
+{
+    uidvalidity = "";
+    size_t uid_validity_pos = current_response_data.find("* OK [UIDVALIDITY ");
+    if(uid_validity_pos != std::string::npos)
+    {
+        uid_validity_pos += 18;
+        while(current_response_data[uid_validity_pos] >= 48 && current_response_data[uid_validity_pos] <= 57)
+        {
+            uidvalidity += current_response_data[uid_validity_pos];
+
+            uid_validity_pos += 1;
+        }
+    }
+    else
+    {
+        std::cerr << "Error: UIDVALIIDTY not found" << std::endl;
+    }
 }
