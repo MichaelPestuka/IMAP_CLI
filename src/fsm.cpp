@@ -19,21 +19,29 @@ int FSM::WaitForFullAnswer()
         current_state = fsm_state::ERR;
         return 1;
     }
-
-    std::string received_part = connect->Receive();
-    current_response_data = received_part;
-    while (received_part.find(sent_message_id) == std::string::npos)
+    while (true)
     {
-        // if reading returns 0, there is an error while reading, most likely connection closed
-        if(received_part == "\0")
+        std::string received = connect->Receive();
+        if(received == "\0")
         {
             std::cerr << "Error reading from server" << std::endl;
             return 1;
         }
-        current_response_data += received_part;
-        received_part = connect->Receive();
+        current_response_data += received;
+        if(current_response_data.find(sent_message_id) != std::string::npos)
+        {
+            if(current_response_data.find(sent_message_id + " OK") != std::string::npos)
+            {
+                return 0;
+            }
+            else if(current_response_data.find(sent_message_id + " NOK") != std::string::npos || current_response_data.find(sent_message_id + " BAD") != std::string::npos)
+            {
+                return 1;
+            }
+        }
     }
-    if(received_part.find("OK") != std::string::npos)
+
+    if(current_response_data.find(sent_message_id + " OK") != std::string::npos)
     {
         return 0;
     }     
@@ -217,10 +225,14 @@ void FSM::SaveSearchUIDs()
 
     int pos = current_response_data.find("* SEARCH ");
     std::string current_num = "";
-    for (int i = pos + 9; current_response_data[i] != '\n'; i++) // until reaching newline 
+    for (size_t i = pos + 9; i < current_response_data.length(); i++) // until reaching newline 
     {
         if(current_response_data[i] < 48 || current_response_data[i] > 57) // if not number, push completed number to queue
         {
+            if(current_num == "")
+            {
+                return; 
+            }
             mail_ids.push(current_num);
             current_num = "";
         }
