@@ -15,11 +15,13 @@ Argparser::Argparser(int argc, char* argv[])
                 break;
             }
             char *next;
-            port = strtol(argv[i], &next, 10);
+            strtol(argv[i], &next, 10);
             if(*next != '\0')
             {
                 BadValueError(argv[i]); 
             }
+            provided_port = true;
+            port = argv[i];
         }
 
         // TLS

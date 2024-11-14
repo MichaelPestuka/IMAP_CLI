@@ -22,7 +22,7 @@
 class Connection
 {
     public:
-        Connection(const char *hostname, const char* port, Argparser* args);
+        Connection(const char *hostname, const char* default_port, Argparser* args);
         virtual ~Connection();
         virtual int Connect();
         virtual std::string Send(std::string message);

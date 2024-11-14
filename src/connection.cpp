@@ -1,6 +1,6 @@
 #include "connection.hpp"
 
-Connection::Connection(const char* hostname, const char* port, Argparser* args)
+Connection::Connection(const char* hostname, const char* default_port, Argparser* args)
 {
     message_id = 0;
     this->args = args;
@@ -15,8 +15,15 @@ Connection::Connection(const char* hostname, const char* port, Argparser* args)
 
     
 
-    int resolve_success = getaddrinfo(hostname, port, &hints, &resolved_data);
-    
+    int resolve_success;
+    if(args->provided_port)
+    {
+        resolve_success = getaddrinfo(hostname, args->port.c_str(), &hints, &resolved_data);
+    }
+    else
+    {
+        resolve_success = getaddrinfo(hostname, default_port, &hints, &resolved_data);
+    }
     if(resolve_success != 0)
     {
         std::cerr << "Error resolving hostname: " << hostname << " error code " << gai_strerror(resolve_success) << std::endl;

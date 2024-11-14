@@ -14,7 +14,8 @@ class Argparser
         std::string server;
         bool provided_server;
 
-        int port = -1;
+        std::string port = "";
+        bool provided_port = false;
 
         bool imaps = false;
 
