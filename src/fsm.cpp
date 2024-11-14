@@ -41,10 +41,6 @@ int FSM::WaitForFullAnswer()
         }
     }
 
-    if(current_response_data.find(sent_message_id + " OK") != std::string::npos)
-    {
-        return 0;
-    }     
     return 1;
 }
 

@@ -54,7 +54,7 @@ Argparser::Argparser(int argc, char* argv[])
                 break;
             }
             certfolder = argv[i];
-            use_certfile = true;
+            use_certfolder = true;
         }
         // only new
         else if(strcmp(argv[i], "-n") == 0)
