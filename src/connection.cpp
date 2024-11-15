@@ -1,3 +1,7 @@
+/**
+ * @author Michael Pestuka (xpestu01)
+ */
+
 #include "connection.hpp"
 
 Connection::Connection(const char* hostname, const char* default_port, Argparser* args)
@@ -40,6 +44,13 @@ Connection::Connection(const char* hostname, const char* default_port, Argparser
     }
         
     client_socket = socket(resolved_data->ai_family, resolved_data->ai_socktype, resolved_data->ai_protocol);
+
+    // Setting socket timeout
+    struct timeval tv;
+    tv.tv_sec = 5;
+    tv.tv_usec = 0;
+    setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, (const char *) &tv, sizeof(tv));
+    setsockopt(client_socket, SOL_SOCKET, SO_SNDTIMEO, (const char *) &tv, sizeof(tv));
 }
 
 Connection::~Connection()

@@ -1,3 +1,7 @@
+/**
+ * @author Michael Pestuka (xpestu01)
+ */
+
 #ifndef H_FSM
 #define H_FSM
 

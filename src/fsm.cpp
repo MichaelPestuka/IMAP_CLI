@@ -1,3 +1,8 @@
+/**
+ * @author Michael Pestuka (xpestu01)
+ */
+
+
 #include "fsm.hpp"
 
 FSM::FSM(Argparser *args, auth_data authdata, Connection *connect)

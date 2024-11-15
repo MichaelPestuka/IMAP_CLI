@@ -1,3 +1,7 @@
+/**
+ * @author Michael Pestuka (xpestu01)
+ */
+
 #include "fileops.hpp"
 
 int WriteToFile(std::string path, std::string contents)

@@ -1,3 +1,7 @@
+/**
+ * @author Michael Pestuka (xpestu01)
+ */
+
 #include "argparser.hpp"
 
 Argparser::Argparser(int argc, char* argv[])

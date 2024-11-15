@@ -1,3 +1,7 @@
+/**
+ * @author Michael Pestuka (xpestu01)
+ */
+
 #include <iostream>
 #include <sys/socket.h>
 #include <stdlib.h>
