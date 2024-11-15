@@ -59,7 +59,6 @@ Argparser::Argparser(int argc, char* argv[])
         // only new
         else if(strcmp(argv[i], "-n") == 0)
         {
-            i++;
             only_new = true;
         }
         // only headers
