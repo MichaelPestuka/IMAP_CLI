@@ -65,7 +65,6 @@ Argparser::Argparser(int argc, char* argv[])
         // only headers
         else if(strcmp(argv[i], "-h") == 0)
         {
-            i++;
             only_headers = true;
         }
         

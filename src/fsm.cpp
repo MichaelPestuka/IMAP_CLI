@@ -134,11 +134,19 @@ void FSM::FSMLoop()
                 else
                 {
                     // Headers and full emails are saved into separate files
+                    // filename format is email_mailbox_UID_UIDVALIDITY
+                    // if only header is saved _HEADER is added to filename
 
-                    // check if file named LOGIN_INBOX_UID_HEADER already exists (message is already saved)
+                    std::string email_filename = args->outdir + authdata.login + "_" + args->mailbox + "_" + mail_ids.front() + "_" + uidvalidity;
+                    if(args -> only_headers)
+                    {
+                        email_filename += "_HEADER";
+                    }
+                    
+                    // check if email file already exists
                     if(args->only_headers)
                     {
-                        if(!CheckIfFileExists(args->outdir + authdata.login + "_" + args->mailbox + "_" + uidvalidity + "_" + mail_ids.front() + "_HEADER"))
+                        if(!CheckIfFileExists(email_filename))
                         {
                             sent_message_id = connect->Send("UID FETCH " + mail_ids.front() + " BODY.PEEK[HEADER]"); // checking headers wont change SEEN state
                         }
@@ -150,8 +158,8 @@ void FSM::FSMLoop()
                     }
                     else
                     {
-                        // Check if file named LOGIN_INBOX_UID exists
-                        if(!CheckIfFileExists(args->outdir + authdata.login + "_" + args->mailbox + "_" + uidvalidity + "_" + mail_ids.front()))
+                        // Check if email file already exists
+                        if(!CheckIfFileExists(email_filename))
                         {
                             sent_message_id = connect->Send("UID FETCH " + mail_ids.front() + " BODY[]");
                         }
@@ -166,7 +174,7 @@ void FSM::FSMLoop()
                     {
                         downloaded_email_count++;
                         std::string email_body = ExtractEmailBody();
-                        WriteToFile(args->outdir + authdata.login + "_" + args->mailbox + "_" + uidvalidity + "_" + mail_ids.front(), email_body); // save email contents to INBOX_UID file
+                        WriteToFile(email_filename, email_body); // save email contents to file
                         mail_ids.pop();
                     }
                     else
@@ -188,7 +196,14 @@ void FSM::FSMLoop()
 
             case fsm_state::END:
             {
-                std::cout << "Downloaded " << downloaded_email_count << " email(s) from mailbox " << args->mailbox << std::endl;
+                if(args->only_headers)
+                {
+                    std::cout << "Downloaded " << downloaded_email_count << " header(s) from mailbox " << args->mailbox << std::endl;
+                }
+                else
+                {
+                    std::cout << "Downloaded " << downloaded_email_count << " email(s) from mailbox " << args->mailbox << std::endl;
+                }
                 next_state = fsm_state::SHUTDOWN;
                 break;
             }
