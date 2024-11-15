@@ -44,8 +44,8 @@ class TLSConnection : public Connection
         std::string Send(std::string message);
         std::string Receive();
     private:
-        SSL* ssl;
-        SSL_CTX* ssl_ctx;
+        SSL* ssl = nullptr;
+        SSL_CTX* ssl_ctx = nullptr;
         int sock;
         void InitializeSSL();
         void DestroySSL();

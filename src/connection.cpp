@@ -64,8 +64,14 @@ std::string Connection::Send(std::string message)
 
 TLSConnection::~TLSConnection()
 {
-    SSL_free(ssl);
-    SSL_CTX_free(ssl_ctx);
+    if(ssl != nullptr)
+    {
+        SSL_free(ssl);
+    }
+    if(ssl_ctx != nullptr)
+    {
+        SSL_CTX_free(ssl_ctx);
+    }
     DestroySSL();
     close(client_socket);
     freeaddrinfo(resolved_data);
