@@ -2,21 +2,6 @@
  * @author Michael Pestuka (xpestu01)
  */
 
-#include <iostream>
-#include <sys/socket.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <thread>
-
-
-#include <openssl/bio.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-
 #include "connection.hpp"
 #include "argparser.hpp"
 #include "fileops.hpp"
@@ -24,6 +9,7 @@
 
 int main(int argc, char* argv[])
 {
+    // Parse and check arguments
     Argparser argparser(argc, argv);
     if(!argparser.AreArgsValid())
     {
@@ -37,6 +23,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    // Initialize connection to server
     Connection* connect;
     if(argparser.imaps)
     {
@@ -51,6 +38,8 @@ int main(int argc, char* argv[])
         delete(connect);
         return 1;
     }
+
+    // Start program loop
     FSM fsm = FSM(&argparser, authdata, connect);
     fsm.FSMLoop();
     delete(connect);

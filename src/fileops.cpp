@@ -9,7 +9,7 @@ int WriteToFile(std::string path, std::string contents)
     std::ofstream outfile(path);
     if(outfile.is_open())
     {
-        outfile << contents << std::endl; //TODO endl ma byt?
+        outfile << contents << std::endl;
         outfile.close();
     }
     else

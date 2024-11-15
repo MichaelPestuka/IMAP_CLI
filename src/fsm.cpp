@@ -11,7 +11,7 @@ FSM::FSM(Argparser *args, auth_data authdata, Connection *connect)
     this->authdata = authdata;
     current_state = fsm_state::START;
     current_response_data = "";
-    sent_message_id = "*"; // No starting message ID
+    sent_message_id = "*"; // No starting message ID, since first expected message is "* OK ..."
     this->connect = connect;
     this->uidvalidity = "0";
     this->downloaded_email_count = 0;
@@ -19,20 +19,27 @@ FSM::FSM(Argparser *args, auth_data authdata, Connection *connect)
 
 int FSM::WaitForFullAnswer()
 {
+    // Check if message id is valid (probably unnecessary)
     if(sent_message_id == "")
     {
         current_state = fsm_state::ERR;
         return 1;
     }
+
+    // Loop until the sent message id is found - response ends
     while (true)
     {
         std::string received = connect->Receive();
+
+        // If server times out or connection closes
         if(received == "\0")
         {
             std::cerr << "Error reading from server" << std::endl;
             return 1;
         }
         current_response_data += received;
+
+        // Look for message ID + OK|NOK|BAD in response
         if(current_response_data.find(sent_message_id) != std::string::npos)
         {
             if(current_response_data.find(sent_message_id + " OK") != std::string::npos)
@@ -49,12 +56,13 @@ int FSM::WaitForFullAnswer()
     return 1;
 }
 
+// Correct flow should be START -> AUTH -> INBOX -> SEARCH -> FETCH -> LOGOUT -> END -> SHUTDOWN
 void FSM::FSMLoop()
 {
+    // Run until shutdown
     while(current_state != fsm_state::SHUTDOWN)
     {
         fsm_state next_state = current_state;
-
 
         switch(current_state)
         {
@@ -179,7 +187,7 @@ void FSM::FSMLoop()
                     {
                         downloaded_email_count++;
                         std::string email_body = ExtractEmailBody();
-                        WriteToFile(email_filename, email_body); // save email contents to file
+                        WriteToFile(email_filename, email_body); // Save email contents to file
                         mail_ids.pop();
                     }
                     else
@@ -194,7 +202,6 @@ void FSM::FSMLoop()
             case fsm_state::LOGOUT:
             {
                 sent_message_id = connect->Send("LOGOUT");
-                // int success = WaitForFullAnswer();
                 next_state = fsm_state::END;
                 break;
             }
@@ -226,16 +233,12 @@ void FSM::FSMLoop()
             }
         }
 
-
-        current_state = next_state;
-        current_response_data = "";
+        current_state = next_state; // Update state
+        current_response_data = ""; // Clear server resonse data
     }
 }
 
 
-/**
- * @param response should be formatted like "1 2 3 \n" - taken from a *SEARCH response
- */
 void FSM::SaveSearchUIDs()
 {
 

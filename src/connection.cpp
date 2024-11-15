@@ -6,19 +6,21 @@
 
 Connection::Connection(const char* hostname, const char* default_port, Argparser* args)
 {
+    // Message id counts how many messages were sent, is prepended to every sent message
     message_id = 0;
+
     this->args = args;
     
-    // Resolve hostname
     struct addrinfo hints, *p;
     memset(&hints, 0, sizeof(hints));
+
+    // Connection parameters setup (TCP over IPV4)
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = AI_PASSIVE;
 
-    
-
+    // Resolve hostname
     int resolve_success;
     if(args->provided_port)
     {
@@ -28,11 +30,15 @@ Connection::Connection(const char* hostname, const char* default_port, Argparser
     {
         resolve_success = getaddrinfo(hostname, default_port, &hints, &resolved_data);
     }
+
+    // Check resolution success
     if(resolve_success != 0)
     {
         std::cerr << "Error resolving hostname: " << hostname << " error code " << gai_strerror(resolve_success) << std::endl;
         return;
     }
+
+    // Go through all IPs from resolved name
     for (p = resolved_data; p != NULL; p = p->ai_next)
     {
         char ipstr[INET_ADDRSTRLEN];
@@ -42,7 +48,8 @@ Connection::Connection(const char* hostname, const char* default_port, Argparser
         addr = &(ipv4->sin_addr);
         inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));
     }
-        
+
+    // Create socket        
     client_socket = socket(resolved_data->ai_family, resolved_data->ai_socktype, resolved_data->ai_protocol);
 
     // Setting socket timeout
@@ -52,6 +59,8 @@ Connection::Connection(const char* hostname, const char* default_port, Argparser
     setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, (const char *) &tv, sizeof(tv));
     setsockopt(client_socket, SOL_SOCKET, SO_SNDTIMEO, (const char *) &tv, sizeof(tv));
 }
+
+// Virtual function prototypes
 
 Connection::~Connection()
 {}
@@ -101,9 +110,10 @@ int TLSConnection::Connect()
     InitializeSSL();
     const SSL_METHOD *meth = TLS_client_method();
     ssl_ctx = SSL_CTX_new(meth);
+
+    // Set where certificates for verification are located
     if(args->use_certfile)
     {
-        // SSL_CTX_use_certificate_file(ssl_ctx, args->certfile.c_str(), SSL_FILETYPE_PEM); // Only PEM certificates, idc anymore
         if(SSL_CTX_load_verify_file(ssl_ctx, args->certfile.c_str()) == 0) // Error loading
         {
             std::cerr << "Error loading certificate file, default directory will be used instead" << std::endl;
@@ -116,7 +126,10 @@ int TLSConnection::Connect()
             std::cerr << "Error loading certificate directory, default directory will be used instead" << std::endl;
         }
     }
+
+    // Create SSL from data
     ssl = SSL_new(ssl_ctx);
+
     //check error
     if(!ssl)
     {
@@ -124,6 +137,7 @@ int TLSConnection::Connect()
         return 1;
     }
 
+    // Assign socket to SSL
     sock = SSL_get_fd(ssl);
     SSL_set_fd(ssl, client_socket);
     err = SSL_connect(ssl);
