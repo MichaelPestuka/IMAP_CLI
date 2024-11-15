@@ -1,0 +1,36 @@
+Author: Michael Peštuka (xpestu01)
+
+Imapcl - a simple CLI IMAP client
+
+Use example for BUT FIR email server:
+
+./imapcl imap.stud.fit.vutbr.cz -a auth_fit -o ./email_dir
+
+where auth_fit is a file containing user login information
+
+CLI argument options:
+
+-p Used port
+-T use SSL/TLS encryption
+-c certificate used for verification
+-C directory where certificates are located
+-n Only download new
+-h only download headers
+-a file with login information path
+-b mailbox to download from
+-o directory where emails are saved
+
+Included files:
+src/argparser.cpp
+src/argparser.hpp
+src/connection.cpp  
+src/connection.hpp  
+src/fileops.cpp  
+src/fileops.hpp  
+src/fsm.cpp  
+src/fsm.hpp  
+src/imapcl.cpp  
+Makefile
+README
+manual.pdf
+
