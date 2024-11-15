@@ -2,7 +2,7 @@ Author: Michael Peštuka (xpestu01)
 
 Imapcl - a simple CLI IMAP client
 
-Use example for BUT FIR email server:
+Use example for BUT FIT email server:
 
 ./imapcl imap.stud.fit.vutbr.cz -a auth_fit -o ./email_dir
 
