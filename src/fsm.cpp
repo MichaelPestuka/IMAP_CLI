@@ -202,7 +202,16 @@ void FSM::FSMLoop()
             case fsm_state::LOGOUT:
             {
                 sent_message_id = connect->Send("LOGOUT");
-                next_state = fsm_state::END;
+                int success = WaitForFullAnswer();
+                if(success == 0)
+                {
+                    next_state = fsm_state::END;
+                }
+                else
+                {
+                    std::cerr << "Error: Logout failed" << std::endl;
+                    next_state = fsm_state::ERR;
+                }
                 break;
             }
 
