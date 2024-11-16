@@ -1,0 +1,68 @@
+\documentclass[]{report}
+\usepackage{biblatex}
+\usepackage[czech]{babel}
+% Title Page
+\title{Klient IMAP s podporou TLS}
+\author{Michael Peštuka}
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\end{abstract}
+
+\section{Teorie }
+
+
+\subsection{Šifrování SSL/TLS}
+\subsection{Protokol IMAP4rev1}
+
+
+¨
+\section{Návrh a imlementace}
+Program je rozdělený do několika souborů a tříd, které implementují potřebnou funkcionalitu. Všechny zdrojové soubory se nachází v adresáří ./src
+\subsection{imapcl.cpp}
+Soubor imapcl.cpp obsahuje funkci Main a slouží jako vstupní bod programu. Argumenty zadané uživatelem jsou zpracovány a uloženy v instanci třídy Argparser. Na základě argumentů je navázáno spojení, reprezentované instancí třídy TLSConnection nebo UnsecuredConnection. Následně je zahájena komunikace se serverem na bázi stavového stroje popsaného třídou FSM.
+\subsection{argparser.cpp/.hpp}
+Třída argparser zpracovává argumenty programu z příkazové řádky a jejich hodnoty ukládá v instanci této třídy. Zpracování argumentů je řešeno vlastním parserem.
+\subsection{connection.cpp/.hpp}
+Třída Connection slouží jako abstraktní třída ze které dědí třídy TLSConnection a UnsecuredConnection, které spravují připojení na server, čtení a zapisování dat na něj pro TLS/SSL a nezabezpečené spojení respektive.
+\subsection{fsm.cpp/.hpp}
+Třída ovládající běh programu a jeho komunikace se serverem. Běh programu je modelován Mooreovým konečným automatem, jehož vstupy jsou zprávy obdržené ze serveru a jeho výstupy zprávy odeslané serveru.
+\subsection{fileops.cpp/.hpp}
+Pomocné třídy na práci se soubory, konkrétně pro zápis obsahu e-mailů a čtení přihlašovacích údajů uživatele. 
+\section{Funkcionalita programu}
+\subsection{Výběr e-mailů ze serveru}
+UID stahováných e-mailů jsou získávány příkazem "UID SEARCH ALL", v případě stahování pouze nových e-mailů "UID SEARCH NEW"
+\subsection{Stahování e-mailů ze serveru}
+E-maily jsou získány příkazem "UID FETCH BODY[]", hlavičkové soubory příkazem "UID FETCH BODY.PEEK[HEADER]", tím pádem se při stahování hlaviček nezmění stav SEEN e-mailu.
+\subsection{Ukládání e-mailů ze serveru}
+Zprávy ze serveru jsou ukládány do souborů pojmenovaných formátem "user@email.com\_mailbox\_UID\_UIDVALIDITY", při čtení pouze hlaviček je k názvu souboru přidáno "\_HEADER". Hlavičky stažené při použití parametru "-h" a celé e-maily jsou tím pádem ukládány zvlášť a nijak se nepřepisují.
+
+\section{Použití programu}
+
+Použití: imapcl server [-p port] [-T [-c certfile] [-C certaddr]] [-n] [-h] -a auth\_file [-b MAILBOX] -o out\_dir
+
+Parametry v hranatých závorkách jsou volitelné.
+Pořadí parametrů je libovolné. Popis parametrů:
+\begin{itemize}
+	 
+
+
+\item První parametr je vždy název serveru (IP adresa, nebo doménové jméno).
+\item -p port specifikuje číslo portu na serveru. Výchozí hodnota je 143, při použití TLS 993.
+\item -T zapíná šifrování přes SSL/TLS
+\item -c určuje soubor s certifikáty, který se použije pro ověření platnosti certifikátu SSL/TLS předloženého serverem.
+\item -C určuje adresář, ve kterém se mají vyhledávat certifikáty, které se použijí pro ověření platnosti certifikátu SSL/TLS předloženého serverem. Výchozí hodnota je /etc/ssl/certs.
+\item -n provádí stažení pouze nových zpráv
+\item -h provádí stažení pouze hlaviček zpráv.
+\item -a auth\_file odkazuje na soubor s přihlašovacími údaji uživatele
+\item -b určuje název poštovní schránky, ze které budou staženy maily. Výchozí hodnota je INBOX.
+\item -o out\_dir specifikuje adresář, do kterého budou stažené maily uloženy.
+\end{itemize}
+
+\section{Testování aplikace}
+\printbibliography
+
+\end{document}          
