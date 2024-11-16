@@ -42,11 +42,11 @@ int FSM::WaitForFullAnswer()
         // Look for message ID + OK|NOK|BAD in response
         if(current_response_data.find(sent_message_id) != std::string::npos)
         {
-            if(current_response_data.find(sent_message_id + " OK") != std::string::npos)
+            if(current_response_data.find(sent_message_id + " OK ") != std::string::npos)
             {
                 return 0;
             }
-            else if(current_response_data.find(sent_message_id + " NOK") != std::string::npos || current_response_data.find(sent_message_id + " BAD") != std::string::npos)
+            else if(current_response_data.find(sent_message_id + " NO ") != std::string::npos || current_response_data.find(sent_message_id + " BAD ") != std::string::npos)
             {
                 return 1;
             }
