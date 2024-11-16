@@ -10,7 +10,7 @@
 
 
 /**
- * @struct Structure holding user login data
+ * @struct auth_data Structure holding user login data
  */
 struct auth_data
 {
