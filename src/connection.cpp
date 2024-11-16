@@ -86,13 +86,26 @@ TLSConnection::~TLSConnection()
 {
     if(ssl != nullptr)
     {
+        int err = SSL_shutdown(ssl);
+        if(err == 0)
+        {
+            // Second call performs bidirectional shutdown
+            SSL_shutdown(ssl);
+        }
+        if(err == -1)
+        {
+            std::cerr << "Error during SSL shutdown" << std::endl;
+        }
         SSL_free(ssl);
     }
+
+    // Free SSL allocated memory
     if(ssl_ctx != nullptr)
     {
         SSL_CTX_free(ssl_ctx);
     }
     DestroySSL();
+
     close(client_socket);
     freeaddrinfo(resolved_data);
 }
