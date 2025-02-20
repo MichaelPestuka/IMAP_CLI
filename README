@@ -1,12 +1,14 @@
-Author: Michael Peštuka (xpestu01)
+Author: Michael Peštuka
 
-Imapcl - a simple CLI IMAP client
+Imapcl - a simple CLI IMAP client for downloading email
 
-Use example for BUT FIT email server:
+Use example:
 
-./imapcl imap.stud.fit.vutbr.cz -a auth_fit -o ./email_dir
+./imapcl imap.seznam.cz -a auth_file -o ./email_dir
 
-where auth_fit is a file containing user login information
+where auth_file is a file containing user login information in this format:
+'username
+password'
 
 CLI argument options:
 
